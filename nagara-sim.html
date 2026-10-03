@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ja"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>長良川ぞいを進もう</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#fdf3dc;--fg:#222;--card:#fff}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#2a2619;--fg:#f3ead2;--card:#1b1b1b}}
+:root[data-theme="dark"]{--bg:#2a2619;--fg:#f3ead2;--card:#1b1b1b}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:-apple-system,"Hiragino Sans",sans-serif;padding:8px}
+h1{font-size:18px;margin:4px 0}
+p{font-size:13px;line-height:1.5;margin:4px 0 8px}
+.row{display:flex;gap:6px}
+canvas{background:var(--card);border:1px solid #888;border-radius:6px;height:380px}
+#m{width:120px}#g{flex:1;min-width:0}
+button{font-size:15px;padding:8px 14px;border-radius:8px;border:1px solid #888;background:var(--card);color:var(--fg)}
+.c{margin:8px 0;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+label{font-size:14px;margin-right:8px;white-space:nowrap}
+input[type=range]{flex:1;min-width:140px}
+</style></head><body>
+<h1>長良川ぞいを進もう</h1>
+<p>長良橋から東へ2800mの鵜飼大橋へ、山路さんは走って、小松さんは歩いて向かいます。純矢さんは長良橋から西へ1600mの金華橋へ分速80mで、同時に出発しました。</p>
+<div class="row"><canvas id="m"></canvas><canvas id="g"></canvas></div>
+<div class="c"><button id="s">スタート</button><button id="p">ストップ</button><button id="r">元に戻す</button>
+<span>時間 <b id="tv">0</b> 分</span></div>
+<div class="c"><input type="range" id="t" min="0" max="70" step="0.1" value="0"></div>
+<div class="c" id="cb"></div>
+<script>
+const P=[{n:"山路さん",c:"#e03a2f",v:140,end:2800,k:"y"},{n:"小松さん",c:"#2a6fdb",v:40,end:2800,k:"k"},{n:"純矢さん",c:"#d6309b",v:-80,end:-1600,k:"j"}];
+const show={y:true,k:true,j:false},gr={y:false,k:false,j:false};
+const cb=document.getElementById("cb");
+P.forEach(p=>{cb.insertAdjacentHTML("beforeend",`<label style="color:${p.c}"><input type=checkbox data-a="s" data-k="${p.k}" ${show[p.k]?"checked":""}> ${p.n}</label>`)});
+cb.insertAdjacentHTML("beforeend","<br>");
+P.forEach(p=>{cb.insertAdjacentHTML("beforeend",`<label style="color:${p.c}"><input type=checkbox data-a="g" data-k="${p.k}"> ${p.n}のグラフ</label>`)});
+cb.onchange=e=>{const d=e.target.dataset;(d.a=="s"?show:gr)[d.k]=e.target.checked;draw()};
+let t=0,play=false,last=0;
+const M=document.getElementById("m"),G=document.getElementById("g"),sl=document.getElementById("t");
+const mx=M.getContext("2d"),gx=G.getContext("2d");
+const MIN=-1600,MAX=2800,TM=70;
+function fit(c){const r=devicePixelRatio||1;c.width=c.clientWidth*r;c.height=c.clientHeight*r;c.getContext("2d").setTransform(r,0,0,r,0,0)}
+function pos(p,t){const d=p.v*t;return p.v>0?Math.min(d,p.end):Math.max(d,p.end)}
+function draw(){
+ const fg=getComputedStyle(document.body).color;
+ // map
+ let w=M.clientWidth,h=M.clientHeight,top=20,bot=h-20;
+ const Y=d=>bot-(d-MIN)/(MAX-MIN)*(bot-top);
+ mx.clearRect(0,0,w,h);mx.fillStyle="#999";mx.fillRect(w/2-8,top,16,bot-top);
+ mx.fillStyle=fg;mx.font="11px sans-serif";mx.textAlign="left";
+ [[2800,"東 鵜飼大橋"],[0,"長良橋"],[-1600,"西 金華橋"]].forEach(([d,s])=>{mx.fillRect(w/2-14,Y(d)-1,28,2);mx.fillText(s,2,Y(d)-5)});
+ P.forEach((p,i)=>{if(!show[p.k])return;const x=w/2+(i-1)*20,y=Y(pos(p,t));
+  mx.fillStyle=p.c;mx.beginPath();mx.arc(x,y,8,0,7);mx.fill();
+  mx.fillStyle=fg;mx.font="10px sans-serif";mx.textAlign=x>w/2?"left":"right";mx.fillText(p.n[0],x+(x>w/2?11:-11),y+4)});
+ // graph
+ w=G.clientWidth;h=G.clientHeight;const L=42,R=8,T=10,B=22;
+ const gX=x=>L+x/TM*(w-L-R),gY=y=>h-B-(y-MIN)/(MAX-MIN)*(h-T-B);
+ gx.clearRect(0,0,w,h);gx.strokeStyle="#bbb";gx.fillStyle=fg;gx.font="10px sans-serif";gx.lineWidth=.5;
+ gx.textAlign="right";for(let y=MIN;y<=MAX;y+=400){gx.beginPath();gx.moveTo(L,gY(y));gx.lineTo(w-R,gY(y));gx.stroke();gx.fillText(y,L-3,gY(y)+3)}
+ gx.textAlign="center";for(let x=0;x<=TM;x+=10){gx.beginPath();gx.moveTo(gX(x),T);gx.lineTo(gX(x),h-B);gx.stroke();gx.fillText(x,gX(x),h-B+12)}
+ gx.strokeStyle=fg;gx.lineWidth=1.5;gx.beginPath();gx.moveTo(L,gY(0));gx.lineTo(w-R,gY(0));gx.moveTo(L,T);gx.lineTo(L,h-B);gx.stroke();
+ gx.textAlign="left";gx.fillText("(分)",w-30,gY(0)-4);gx.fillText("(m)",L+3,T+8);
+ P.forEach(p=>{if(!gr[p.k])return;gx.strokeStyle=p.c;gx.fillStyle=p.c;gx.lineWidth=2.5;gx.beginPath();gx.moveTo(gX(0),gY(0));
+  const te=Math.abs(p.end/p.v);const tt=Math.min(t,te);gx.lineTo(gX(tt),gY(pos(p,t)));gx.stroke();
+  gx.beginPath();gx.arc(gX(tt),gY(pos(p,t)),4,0,7);gx.fill()});
+ document.getElementById("tv").textContent=t.toFixed(1);sl.value=t;
+}
+function loop(n){if(play){t=Math.min(TM,t+(n-last)/1000*5);if(t>=TM)play=false}last=n;draw();requestAnimationFrame(loop)}
+s.onclick=()=>{play=true;if(t>=TM)t=0};p.onclick=()=>play=false;r.onclick=()=>{play=false;t=0;draw()};
+sl.oninput=()=>{play=false;t=+sl.value;draw()};
+function init(){fit(M);fit(G);draw()}
+addEventListener("resize",init);init();requestAnimationFrame(loop);
+</script></body></html>
