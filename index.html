@@ -10,18 +10,18 @@
 body{margin:0;background:var(--bg);color:var(--fg);font-family:-apple-system,"Hiragino Sans",sans-serif;padding:8px}
 h1{font-size:18px;margin:4px 0}
 p{font-size:13px;line-height:1.5;margin:4px 0 8px}
-.row{display:flex;gap:6px}
-canvas{background:var(--card);border:1px solid #888;border-radius:6px;height:380px}
-#m{width:120px}#g{flex:1;min-width:0}
+.row{display:flex;gap:6px;justify-content:center}
+canvas{background:var(--card);border:1px solid #888;border-radius:6px;height:480px}
+#m{width:120px}#g{flex:1;min-width:0;max-width:400px}
 button{font-size:15px;padding:8px 14px;border-radius:8px;border:1px solid #888;background:var(--card);color:var(--fg)}
 .c{margin:8px 0;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 label{font-size:14px;margin-right:8px;white-space:nowrap}
 input[type=range]{flex:1;min-width:140px}
 </style></head><body>
 <h1>長良川ぞいを進もう</h1>
-<p>長良橋から東へ2800mの鵜飼大橋へ、山路さんは走って、小松さんは歩いて向かいます。純矢さんは長良橋から西へ1600mの金華橋へ分速80mで、同時に出発しました。</p>
+<p id="q">長良橋から東へ2800mの鵜飼大橋へ、山路さんは走って、小松さんは歩いて向かいます。純矢さんは長良橋から西へ1600mの金華橋へ分速80mで、同時に出発しました。</p>
 <div class="row"><canvas id="m"></canvas><canvas id="g"></canvas></div>
-<div class="c"><button id="s">スタート</button><button id="p">ストップ</button><button id="r">元に戻す</button>
+<div class="c"><button id="s">スタート</button><button id="p">ストップ</button><button id="r">元に戻す</button><button id="mt">数直線を隠す</button><button id="qt">問題文を隠す</button>
 <span>時間 <b id="tv">0</b> 分</span></div>
 <div class="c"><input type="range" id="t" min="0" max="70" step="0.1" value="0"></div>
 <div class="c" id="cb"></div>
@@ -55,7 +55,7 @@ function draw(){
  const gX=x=>L+x/TM*(w-L-R),gY=y=>h-B-(y-MIN)/(MAX-MIN)*(h-T-B);
  gx.clearRect(0,0,w,h);gx.strokeStyle="#bbb";gx.fillStyle=fg;gx.font="10px sans-serif";gx.lineWidth=.5;
  gx.textAlign="right";for(let y=MIN;y<=MAX;y+=400){gx.beginPath();gx.moveTo(L,gY(y));gx.lineTo(w-R,gY(y));gx.stroke();gx.fillText(y,L-3,gY(y)+3)}
- gx.textAlign="center";for(let x=0;x<=TM;x+=10){gx.beginPath();gx.moveTo(gX(x),T);gx.lineTo(gX(x),h-B);gx.stroke();gx.fillText(x,gX(x),h-B+12)}
+ gx.font="9px sans-serif";gx.textAlign="center";for(let x=0;x<=TM;x+=5){gx.beginPath();gx.moveTo(gX(x),T);gx.lineTo(gX(x),h-B);gx.stroke();gx.fillText(x,gX(x),h-B+12)}
  gx.strokeStyle=fg;gx.lineWidth=1.5;gx.beginPath();gx.moveTo(L,gY(0));gx.lineTo(w-R,gY(0));gx.moveTo(L,T);gx.lineTo(L,h-B);gx.stroke();
  gx.textAlign="left";gx.fillText("(分)",w-30,gY(0)-4);gx.fillText("(m)",L+3,T+8);
  P.forEach(p=>{if(!gr[p.k])return;gx.strokeStyle=p.c;gx.fillStyle=p.c;gx.lineWidth=2.5;gx.beginPath();gx.moveTo(gX(0),gY(0));
@@ -66,6 +66,8 @@ function draw(){
 function loop(n){if(play){t=Math.min(TM,t+(n-last)/1000*5);if(t>=TM)play=false}last=n;draw();requestAnimationFrame(loop)}
 s.onclick=()=>{play=true;if(t>=TM)t=0};p.onclick=()=>play=false;r.onclick=()=>{play=false;t=0;draw()};
 sl.oninput=()=>{play=false;t=+sl.value;draw()};
+mt.onclick=()=>{const hid=M.style.display=="none";M.style.display=hid?"":"none";mt.textContent=hid?"数直線を隠す":"数直線を表示";init()};
+qt.onclick=()=>{const hid=q.style.display=="none";q.style.display=hid?"":"none";qt.textContent=hid?"問題文を隠す":"問題文を表示";init()};
 function init(){fit(M);fit(G);draw()}
 addEventListener("resize",init);init();requestAnimationFrame(loop);
 </script></body></html>
