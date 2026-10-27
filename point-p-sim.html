@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ja"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>点Pの動きと三角形ABP</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#f5f5f2;--fg:#222;--card:#fff}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#222;--fg:#eee;--card:#1b1b1b}}
+:root[data-theme="dark"]{--bg:#222;--fg:#eee;--card:#1b1b1b}
+*{box-sizing:border-box}
+body{margin:0;padding:8px;background:var(--bg);color:var(--fg);font-family:-apple-system,"Hiragino Sans",sans-serif}
+#w{max-width:900px;margin:auto}
+canvas{width:100%;display:block;background:var(--card);border:1px solid #888;border-radius:6px}
+.c{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:8px 0}
+button{font-size:16px;padding:9px 14px;border-radius:8px;border:1px solid #888;background:var(--card);color:var(--fg)}
+button:disabled{opacity:.4}
+label{font-size:15px}
+input[type=range]{width:100%}
+.sc{position:relative;height:22px;font-size:14px}
+.sc span{position:absolute;transform:translateX(-50%);white-space:nowrap}
+</style></head><body><div id="w">
+<canvas id="cv"></canvas>
+<div class="c"><b>点Pが点Bから動いた長さ：<span id="xv">0</span> cm</b></div>
+<input type="range" id="sl" min="0" max="16" step="0.1" value="0">
+<div class="sc"><span style="left:0;transform:none">0 (B)</span><span style="left:62.5%">10 (C)</span><span style="left:100%;transform:translateX(-100%)">16 (D)</span></div>
+<div class="c"><button id="b0">点Pを点Bに移動</button><button id="bs">スタート</button><button id="bd">Dまで進める</button>
+<label><input type="checkbox" id="tr"> 点Pが動いた部分を表示</label></div>
+</div>
+<script>
+const c=document.getElementById("cv"),ctx=c.getContext("2d"),sl=document.getElementById("sl");
+let x=0,tgt=null,last=0,trace=false;const V=3;
+function fit(){const r=devicePixelRatio||1,w=c.clientWidth,h=w*0.62;c.style.height=h+"px";c.width=w*r;c.height=h*r;ctx.setTransform(r,0,0,r,0,0);draw()}
+function draw(){
+ const W=c.clientWidth,H=c.clientHeight,fg=getComputedStyle(document.body).color;
+ const u=Math.min(W*0.7/10,H*0.62/6),rw=10*u,rh=6*u,ox=(W-rw)/2,oy=(H-rh)/2;
+ const A=[ox,oy],B=[ox,oy+rh],C=[ox+rw,oy+rh],D=[ox+rw,oy];
+ const P=x<=10?[ox+x*u,oy+rh]:[ox+rw,oy+rh-(x-10)*u];
+ const fs=Math.max(14,u*0.85);ctx.clearRect(0,0,W,H);
+ ctx.fillStyle="rgba(80,140,220,.3)";ctx.beginPath();ctx.moveTo(...A);ctx.lineTo(...B);ctx.lineTo(...P);ctx.closePath();ctx.fill();
+ ctx.strokeStyle=fg;ctx.lineWidth=1.5;ctx.strokeRect(ox,oy,rw,rh);
+ ctx.beginPath();ctx.moveTo(...A);ctx.lineTo(...P);ctx.stroke();
+ if(trace&&x>0){ctx.strokeStyle="#e03a2f";ctx.lineWidth=4;ctx.beginPath();ctx.moveTo(...B);if(x>10)ctx.lineTo(...C);ctx.lineTo(...P);ctx.stroke()}
+ ctx.fillStyle=fg;ctx.beginPath();ctx.arc(P[0],P[1],5,0,7);ctx.fill();
+ ctx.font=fs+"px serif";ctx.textBaseline="middle";
+ ctx.textAlign="right";ctx.fillText("A",A[0]-6,A[1]-fs*.4);ctx.fillText("B",B[0]-6,B[1]+fs*.5);
+ ctx.textAlign="left";ctx.fillText("D",D[0]+6,D[1]-fs*.4);ctx.fillText("C",C[0]+6,C[1]+fs*.5);
+ if(x<=10){ctx.textAlign="center";ctx.fillText("P",P[0],P[1]+fs*.8)}else{ctx.textAlign="left";ctx.fillText("P",P[0]+10,P[1])}
+ ctx.textAlign="center";ctx.fillText("10cm",ox+rw/2,oy-fs*.7);
+ ctx.textAlign="right";ctx.fillText("6cm",ox-fs*.9,oy+rh/2);
+ document.getElementById("xv").textContent=(Math.round(x*10)/10).toString();sl.value=x;
+ b0.disabled=x===0&&tgt===null;bd.disabled=!(x>=10&&x<16&&tgt===null);bs.disabled=tgt!==null;
+}
+function loop(n){if(tgt!==null){x=Math.min(tgt,x+(n-last)/1000*V);if(x>=tgt)tgt=null}last=n;draw();requestAnimationFrame(loop)}
+b0.onclick=()=>{tgt=null;x=0;draw()};
+bs.onclick=()=>{if(x>=10)x=0;tgt=10};
+bd.onclick=()=>{tgt=16};
+sl.oninput=()=>{tgt=null;x=+sl.value;draw()};
+tr.onchange=()=>{trace=tr.checked;draw()};
+addEventListener("resize",fit);fit();requestAnimationFrame(loop);
+</script></body></html>
